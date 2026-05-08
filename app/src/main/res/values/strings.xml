@@ -1,5 +1,9 @@
-<resources>
-    <string name="app_name">Kiel-MensaCard</string>
-    <string name="_0_00">0,00€</string>
-    <string name="your_balance">Dein Mensa Guthaben:</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources tools:locale="de" xmlns:tools="http://schemas.android.com/tools">
+    <string name="nfc_hint">Halte deine Karte an dein Smartphone</string>
+    <string name="nfc_disabled">Bitte NFC aktivieren</string>
+    <string name="nfc_settings">Einstellungen</string>
+    <string name="balance_label">Dein Guthaben:</string>
+    <string name="loading">Bitte warten…</string>
+    <string name="app_name" translatable="false">Kiel-MensaCard</string>
 </resources>

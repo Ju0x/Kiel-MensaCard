@@ -2,6 +2,7 @@ package de.ju0x.mensacard
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.graphics.Color
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
@@ -15,30 +16,31 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import de.ju0x.mensacard.nfc.BalanceReader
+import kotlinx.coroutines.launch
+
 class MainActivity : AppCompatActivity() {
     private var nfcAdapter: NfcAdapter? = null
-    private val TAG = "MainActivity";
+
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
-
-        // window.decorView.setBackgroundColor("#FF5733".toColorInt())
         setContentView(R.layout.activity_main)
-
-        val yourBalance = findViewById<TextView>(R.id.title);
-
-        if (yourBalance != null) {
-            yourBalance.text = "Halte deine Karte an dein Smartphone"
-        }
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
             ?: run {
-                Toast.makeText(this, "NFC wird auf diesem Gerät nicht unterstützt!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "NFC nicht unterstützt", Toast.LENGTH_LONG).show()
                 finish()
                 return
             }
@@ -48,6 +50,8 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        observeCardState()
     }
 
     override fun onResume() {
@@ -83,38 +87,73 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun readDesfireTag(tag: Tag) {
-        runOnUiThread {
-            findViewById<TextView>(R.id.title).text = "Bitte warten..."
-        }
-
         val isoDep = IsoDep.get(tag) ?: return
-        val balanceText: TextView = findViewById(R.id.balance)
 
         Thread {
             val cardData = BalanceReader().read(isoDep)
 
             if (cardData != null) {
-                Log.d(TAG, "Balance: ${cardData.balanceFormatted}")
                 runOnUiThread {
-                    findViewById<TextView>(R.id.title).text = "Dein Guthaben:"
-                    balanceText.text = "%.2f€".format(cardData.balanceEuros)
+                    viewModel.onCardScanned(cardData.balanceEuros)
                 }
-            } else {
-                Log.w(TAG, "Error: Card cannot be read")
             }
         }.start()
     }
 
     private fun updateNfcBanner() {
-        val banner = findViewById<LinearLayout>(R.id.nfc_banner)
-
         if (nfcAdapter?.isEnabled == false) {
-            banner.visibility = View.VISIBLE
+            viewModel.onNfcDisabled()
             findViewById<Button>(R.id.nfc_settings_button).setOnClickListener {
                 startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
             }
         } else {
-            banner.visibility = View.GONE
+            viewModel.onNfcEnabled()
         }
     }
+
+    private fun observeCardState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.cardState.collect { state -> renderState(state) }
+            }
+        }
+    }
+
+    private fun renderState(state: CardUiState) {
+        val stateNfcDisabled = findViewById<LinearLayout>(R.id.state_nfc_disabled)
+        val stateWaiting     = findViewById<TextView>(R.id.state_waiting)
+        val stateScanned     = findViewById<LinearLayout>(R.id.state_scanned)
+        val card             = findViewById<com.google.android.material.card.MaterialCardView>(R.id.card)
+
+        stateNfcDisabled.visibility = View.GONE
+        stateWaiting.visibility     = View.GONE
+        stateScanned.visibility     = View.GONE
+
+        when (state) {
+            is CardUiState.NfcDisabled -> {
+                card.setCardBackgroundColor(Color.TRANSPARENT)
+                card.strokeWidth = dpToPx(2)
+                stateNfcDisabled.visibility = View.VISIBLE
+            }
+            is CardUiState.WaitingForScan -> {
+                card.setCardBackgroundColor(Color.TRANSPARENT)
+                card.strokeWidth = dpToPx(2)
+                stateWaiting.visibility = View.VISIBLE
+            }
+            is CardUiState.ScannedBalance -> {
+                card.setCardBackgroundColor(
+                    ContextCompat.getColor(this, R.color.card_blue)
+                )
+                card.strokeWidth = 0
+                findViewById<TextView>(R.id.balance).text = formatBalance(state.balance)
+                stateScanned.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun formatBalance(amount: Double): String =
+        "%,.2f€".format(amount)
+
+    private fun dpToPx(dp: Int): Int =
+        (dp * resources.displayMetrics.density).toInt()
 }
