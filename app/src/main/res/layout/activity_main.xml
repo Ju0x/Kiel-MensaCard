@@ -8,6 +8,7 @@
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="28dp"
@@ -72,7 +73,6 @@
             android:minHeight="160dp"
             android:padding="32dp">
 
-            <!-- Zustand: NFC deaktiviert -->
             <LinearLayout
                 android:id="@+id/state_nfc_disabled"
                 android:layout_width="wrap_content"
@@ -95,7 +95,6 @@
                     android:text="@string/nfc_settings" />
             </LinearLayout>
 
-            <!-- Zustand: Warten auf Scan -->
             <TextView
                 android:id="@+id/state_waiting"
                 android:layout_width="wrap_content"
@@ -104,7 +103,6 @@
                 android:textAppearance="?attr/textAppearanceBodyLarge"
                 android:visibility="gone" />
 
-            <!-- Zustand: Gescannt -->
             <LinearLayout
                 android:id="@+id/state_scanned"
                 android:layout_width="wrap_content"
@@ -129,5 +127,16 @@
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <ImageView
+        android:id="@+id/emote"
+        android:layout_width="132dp"
+        android:layout_height="197dp"
+        android:layout_marginTop="28dp"
+        android:src="@drawable/notstonks"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.541"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

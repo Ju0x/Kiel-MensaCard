@@ -9,9 +9,9 @@ import android.nfc.tech.IsoDep
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -124,36 +124,33 @@ class MainActivity : AppCompatActivity() {
         val stateWaiting     = findViewById<TextView>(R.id.state_waiting)
         val stateScanned     = findViewById<LinearLayout>(R.id.state_scanned)
         val card             = findViewById<com.google.android.material.card.MaterialCardView>(R.id.card)
+        val stonks = findViewById<ImageView>(R.id.emote)
 
         stateNfcDisabled.visibility = View.GONE
         stateWaiting.visibility     = View.GONE
         stateScanned.visibility     = View.GONE
+        card.strokeWidth = 0
 
         when (state) {
             is CardUiState.NfcDisabled -> {
-                card.setCardBackgroundColor(Color.TRANSPARENT)
-                card.strokeWidth = dpToPx(2)
+                card.setCardBackgroundColor(Color.DKGRAY)
                 stateNfcDisabled.visibility = View.VISIBLE
             }
             is CardUiState.WaitingForScan -> {
-                card.setCardBackgroundColor(Color.TRANSPARENT)
-                card.strokeWidth = dpToPx(2)
+                card.setCardBackgroundColor(Color.DKGRAY)
                 stateWaiting.visibility = View.VISIBLE
             }
             is CardUiState.ScannedBalance -> {
                 card.setCardBackgroundColor(
                     ContextCompat.getColor(this, R.color.card_blue)
                 )
-                card.strokeWidth = 0
                 findViewById<TextView>(R.id.balance).text = formatBalance(state.balance)
                 stateScanned.visibility = View.VISIBLE
+                stonks.setImageResource(R.drawable.stonks)
             }
         }
     }
 
     private fun formatBalance(amount: Double): String =
         "%,.2f€".format(amount)
-
-    private fun dpToPx(dp: Int): Int =
-        (dp * resources.displayMetrics.density).toInt()
 }
