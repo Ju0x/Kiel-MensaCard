@@ -7,30 +7,18 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:text="@string/app_name"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <LinearLayout
         android:id="@+id/nfc_banner"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         android:background="#C62838"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="12dp"
-        android:visibility="gone">
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
             android:layout_width="0dp"
@@ -42,58 +30,57 @@
 
         <Button
             android:id="@+id/nfc_settings_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/nfc_settings"
-            android:textColor="#FFFFFF"
-            style="@style/Widget.MaterialComponents.Button.TextButton" />
+            android:textColor="#FFFFFF" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:text="@string/app_name"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintTop_toBottomOf="@id/nfc_banner"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageView
+        android:id="@+id/emote"
+        android:layout_width="132dp"
+        android:layout_height="197dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/notstonks"
+        app:layout_constraintTop_toBottomOf="@id/textView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="24dp"
+        app:cardBackgroundColor="@android:color/transparent"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
-        app:cardBackgroundColor="@android:color/transparent"
         app:strokeColor="?attr/colorOutline"
         app:strokeWidth="2dp"
-        app:layout_constraintTop_toBottomOf="@id/nfc_banner"
+        app:layout_constraintTop_toBottomOf="@id/emote"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.35">
+        app:layout_constraintVertical_bias="0.2">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:gravity="center"
             android:minHeight="160dp"
+            android:orientation="vertical"
             android:padding="32dp">
-
-            <LinearLayout
-                android:id="@+id/state_nfc_disabled"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/nfc_disabled"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
-
-                <Button
-                    android:id="@+id/btn_nfc_settings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/nfc_settings" />
-            </LinearLayout>
 
             <TextView
                 android:id="@+id/state_waiting"
@@ -107,8 +94,8 @@
                 android:id="@+id/state_scanned"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:gravity="center"
+                android:orientation="vertical"
                 android:visibility="gone">
 
                 <TextView
@@ -124,19 +111,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?attr/textAppearanceDisplayMedium" />
             </LinearLayout>
-
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
-    <ImageView
-        android:id="@+id/emote"
-        android:layout_width="132dp"
-        android:layout_height="197dp"
-        android:layout_marginTop="28dp"
-        android:src="@drawable/notstonks"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.541"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

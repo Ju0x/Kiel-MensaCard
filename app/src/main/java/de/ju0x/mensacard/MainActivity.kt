@@ -1,7 +1,11 @@
 package de.ju0x.mensacard
 
 import android.app.PendingIntent
+import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.nfc.NfcAdapter
 import android.nfc.Tag
@@ -32,6 +36,22 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    private val nfcStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != NfcAdapter.ACTION_ADAPTER_STATE_CHANGED) return
+
+            when (intent.getIntExtra(NfcAdapter.EXTRA_ADAPTER_STATE, NfcAdapter.STATE_OFF)) {
+                NfcAdapter.STATE_ON -> {
+                    viewModel.onNfcEnabled()
+                    enableForegroundDispatch()
+                }
+                NfcAdapter.STATE_OFF -> {
+                    viewModel.onNfcDisabled()
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -51,25 +71,73 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        findViewById<Button>(R.id.nfc_settings_button).setOnClickListener {
+            openNfcSettings()
+        }
+
         observeCardState()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        ContextCompat.registerReceiver(
+            this,
+            nfcStateReceiver,
+            IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(nfcStateReceiver)
     }
 
     override fun onResume() {
         super.onResume()
-
         updateNfcBanner()
+        enableForegroundDispatch()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        runCatching { nfcAdapter?.disableForegroundDispatch(this) }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            updateNfcBanner()
+            enableForegroundDispatch()
+        }
+    }
+
+    private fun enableForegroundDispatch() {
+        val adapter = nfcAdapter ?: return
+        if (!adapter.isEnabled) return
 
         val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        nfcAdapter?.enableForegroundDispatch(this, pendingIntent, null, arrayOf(arrayOf(IsoDep::class.java.name)))
+        runCatching {
+            adapter.enableForegroundDispatch(
+                this, pendingIntent, null, arrayOf(arrayOf(IsoDep::class.java.name))
+            )
+        }
     }
 
-    override fun onPause() {
-        super.onPause()
-        nfcAdapter?.disableForegroundDispatch(this)
+    private fun openNfcSettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
+        } catch (e: ActivityNotFoundException) {
+            try {
+                startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+            } catch (e2: ActivityNotFoundException) {
+                Toast.makeText(this, "Einstellungen konnten nicht geöffnet werden", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -103,9 +171,6 @@ class MainActivity : AppCompatActivity() {
     private fun updateNfcBanner() {
         if (nfcAdapter?.isEnabled == false) {
             viewModel.onNfcDisabled()
-            findViewById<Button>(R.id.nfc_settings_button).setOnClickListener {
-                startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
-            }
         } else {
             viewModel.onNfcEnabled()
         }
@@ -120,30 +185,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderState(state: CardUiState) {
-        val stateNfcDisabled = findViewById<LinearLayout>(R.id.state_nfc_disabled)
-        val stateWaiting     = findViewById<TextView>(R.id.state_waiting)
-        val stateScanned     = findViewById<LinearLayout>(R.id.state_scanned)
-        val card             = findViewById<com.google.android.material.card.MaterialCardView>(R.id.card)
-        val stonks = findViewById<ImageView>(R.id.emote)
+        val banner       = findViewById<LinearLayout>(R.id.nfc_banner)
+        val stateWaiting = findViewById<TextView>(R.id.state_waiting)
+        val stateScanned = findViewById<LinearLayout>(R.id.state_scanned)
+        val card         = findViewById<com.google.android.material.card.MaterialCardView>(R.id.card)
+        val stonks       = findViewById<ImageView>(R.id.emote)
 
-        stateNfcDisabled.visibility = View.GONE
-        stateWaiting.visibility     = View.GONE
-        stateScanned.visibility     = View.GONE
+        banner.visibility       = View.GONE
+        stateWaiting.visibility = View.GONE
+        stateScanned.visibility = View.GONE
         card.strokeWidth = 0
 
         when (state) {
             is CardUiState.NfcDisabled -> {
                 card.setCardBackgroundColor(Color.DKGRAY)
-                stateNfcDisabled.visibility = View.VISIBLE
+                banner.visibility = View.VISIBLE
+                stateWaiting.visibility = View.VISIBLE
             }
             is CardUiState.WaitingForScan -> {
                 card.setCardBackgroundColor(Color.DKGRAY)
                 stateWaiting.visibility = View.VISIBLE
             }
             is CardUiState.ScannedBalance -> {
-                card.setCardBackgroundColor(
-                    ContextCompat.getColor(this, R.color.card_blue)
-                )
+                card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.card_blue))
                 findViewById<TextView>(R.id.balance).text = formatBalance(state.balance)
                 stateScanned.visibility = View.VISIBLE
                 stonks.setImageResource(R.drawable.stonks)
