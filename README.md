@@ -6,4 +6,5 @@ It should work for every cafeteria card from the Studentenwerk SH, but currently
 ## Installation
 
 You can install the app using the latest release: [https://github.com/Ju0x/Kiel-MensaCard/releases](https://github.com/Ju0x/Kiel-MensaCard/releases)
+
 There you can download the APK file and install it.
